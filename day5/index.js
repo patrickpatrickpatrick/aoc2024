@@ -6,34 +6,40 @@ const rules = {}
 const pageSequences = []
 
 lineReader.on('line', (line) => {
-  if (line.split('|').length === 2) {
+  if (line.match(/\|/g)) {
     const [ key, val ] = line.split('|');
-    rules[key] = (rules[key] ?? []).push(val);
+    rules[key] = (rules[key] ?? [])
+    rules[key].push(val)
   }
 
-  if (line.split(',').length) {
+  if (line.match(/\,/g)) {
     pageSequences.push(line.split(','))
   }
 })
 
-const scanBehind = (arr, key, curr) => {
-  if (!arr.length) {
-    return true
-  }
-
-  if (rules[key].find(rule => rule === curr)) {
-    return false
-  }
-
-  const newCurr = arr.pop();
-
-  return scanBehind(arr, key, newCurr);
-}
-
 lineReader.on('close', line => {
-  pageSequences.forEach(pageSeq => {
-    pageSeq.split('').reverse().forEach(pageNumber => {
+  let medium = 0
 
-    })
+  pageSequences.forEach(pageSeq => {
+    let validSeq = true;
+
+    for (const [index, page] of pageSeq.entries()) {
+      if (rules[page]) {
+        const currSeq = pageSeq.slice(0, index).join(',');
+        validSeq = validSeq && !currSeq.match(new RegExp(rules[page].join('|'), 'g'))
+      }
+
+      if (!validSeq) {
+        break; 
+      }
+    }
+
+    if (validSeq) {
+      medium += +pageSeq[Math.floor(pageSeq.length / 2)]
+      // medium.push(pageSeq[Math.floor(pageSeq.length / 2)])
+    } 
   })
+
+
+  console.log(medium)
 })
